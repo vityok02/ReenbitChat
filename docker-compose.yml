@@ -1,0 +1,11 @@
+services:
+  # reenbitchat:
+  #   image: ${DOCKER_REGISTRY-}reenbitchat
+  #   build:
+  #     context: .
+  #     dockerfile: ReenbitChat/Dockerfile
+  reenbitchat.redis:
+    image: redis
+    restart: always
+    ports:
+      - "6379:6379"
