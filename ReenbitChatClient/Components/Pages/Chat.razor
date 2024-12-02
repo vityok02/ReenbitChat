@@ -1,0 +1,54 @@
+﻿@page "/chat"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Navigation
+
+<PageTitle>Chat</PageTitle>
+
+<ul id="messages">
+    @foreach (var message in messages)
+    {
+        <li>@message.UserName: @message.Text</li>
+    }
+</ul>
+
+<input @bind="messageInput" />
+<button @onclick="SendMessage">Send</button>
+<button @onclick="CloseChat">Close</button>
+
+<hr>
+
+
+@code {
+    [Parameter] public HubConnection Connection { get; set; }
+    private string? userInput;
+    private string? messageInput;
+    public List<Message> messages = new();
+
+    public async Task SendMessage()
+    {
+        if (string.IsNullOrEmpty(messageInput))
+        {
+            return;
+        }
+
+        await Connection.SendAsync("SendMessage", messageInput);
+        await UpdateAsync();
+    }
+
+    public async Task CloseChat()
+    {
+
+    }
+
+    public async Task UpdateAsync()
+    {
+        Connection.On<string, string>("ReceiveMessage",
+            (user, message) =>
+        {
+            messages.Add(new Message(user, message));
+            InvokeAsync(StateHasChanged);
+        });
+    }
+    public record Message(string UserName, string Text);
+}

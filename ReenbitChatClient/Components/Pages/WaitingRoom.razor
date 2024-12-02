@@ -1,0 +1,32 @@
+﻿@page "/waiting-room"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+
+<PageTitle>Waiting Room</PageTitle>
+
+<div class="form-group">
+    <label>
+        Chat:
+        <input @bind="chatInput" />
+    </label>
+    <label>
+        User:
+        <input @bind="userInput" />
+    </label>
+</div>
+
+<button @onclick="Join">Join</button>
+
+@code {
+    [Parameter] public EventCallback<UserConnection> JoinChat { get; set; }
+    private string? chatInput;
+    private string? userInput;
+
+    private async Task Join()
+    {
+        if (!string.IsNullOrEmpty(userInput) && !string.IsNullOrEmpty(userInput))
+        {
+            await JoinChat.InvokeAsync(new UserConnection(userInput, chatInput));
+        }
+    }
+}

@@ -1,0 +1,70 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Navigation
+
+<PageTitle>Waiting Room</PageTitle>
+
+@if (IsConnected)
+{
+    <Chat HubConnection="hubConnection"/>
+}
+else
+{
+    <WaitingRoom JoinChat="Join" />
+}
+
+@code {
+    private HubConnection? hubConnection;
+    private List<string> messages = [];
+    private string? chatInput;
+    private string? userInput;
+    private string? messageInput;
+
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     if (hubConnection is not null)
+    //     {
+    //         return;
+    //     }
+
+    //     hubConnection = new HubConnectionBuilder()
+    //         .WithUrl(Navigation.ToAbsoluteUri("https://localhost:7036/chathub"))
+    //         .Build();
+
+    //     hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
+    //     {
+    //         var encodedMsg = $"{user}: {message}";
+    //         messages.Add(encodedMsg);
+    //         InvokeAsync(StateHasChanged);
+    //     });
+
+    //     await hubConnection.StartAsync();
+    // }
+
+    private async Task Join(UserConnection userConnection)
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation
+                .ToAbsoluteUri("https://localhost:7036/chathub"))
+            .Build();
+
+        hubConnection.On<string, string>("ReceiveMessage", 
+            (user, message) =>
+        {
+            var encodedMsg = $"{user}: {message}";
+            messages.Add(encodedMsg);
+            InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection
+            .StartAsync();
+
+        await hubConnection
+            .SendAsync("JoinChat", userConnection);
+    }
+
+    public bool IsConnected =>
+        hubConnection?.State == HubConnectionState.Connected;
+}
