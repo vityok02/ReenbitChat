@@ -6,6 +6,8 @@ builder.Services.AddStackExchangeRedisCache(options =>
 {
     var connection = builder.Configuration
         .GetConnectionString("Redis");
+
+    options.Configuration = connection;
 });
 
 builder.Services.AddCors(options =>
@@ -25,6 +27,7 @@ var app = builder.Build();
 
 app.UseCors();
 
-app.MapHub<ChatHub>("/chat");
+app.MapGet("/", () => "Hello world!");
+app.MapHub<ChatHub>("/chathub");
 
 app.Run();

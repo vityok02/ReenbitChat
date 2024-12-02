@@ -67,7 +67,7 @@ public class ChatHub : Hub<IChatClient>
 
     private async Task<UserConnection?> GetConnectionAsync(string connectionId)
     {
-        var stringConnection = await _cache.GetAsync(Context.ConnectionId);
+        var stringConnection = await _cache.GetAsync(connectionId);
 
         return JsonSerializer
             .Deserialize<UserConnection>(stringConnection);
