@@ -1,14 +1,19 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.SignalR.Client
+@using ReenbitChatClient.Models
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components
-@using Microsoft.AspNetCore.SignalR.Client
 @inject NavigationManager Navigation
 
 <PageTitle>Waiting Room</PageTitle>
 
 @if (IsConnected)
 {
-    <Chat HubConnection="hubConnection"/>
+    <Chat
+    ChatName="chatInput"
+    Messages="messages"
+    SendMessage="SendMessage"
+    CloseChat="CloseChat"/>
 }
 else
 {
@@ -17,31 +22,15 @@ else
 
 @code {
     private HubConnection? hubConnection;
-    private List<string> messages = [];
+    private List<Message> messages = [];
     private string? chatInput;
-    private string? userInput;
-    private string? messageInput;
 
-    // protected override async Task OnInitializedAsync()
-    // {
-    //     if (hubConnection is not null)
-    //     {
-    //         return;
-    //     }
+    public bool IsConnected 
+    { 
+        get => hubConnection?.State == HubConnectionState.Connected;
+        private set {}
+    }
 
-    //     hubConnection = new HubConnectionBuilder()
-    //         .WithUrl(Navigation.ToAbsoluteUri("https://localhost:7036/chathub"))
-    //         .Build();
-
-    //     hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
-    //     {
-    //         var encodedMsg = $"{user}: {message}";
-    //         messages.Add(encodedMsg);
-    //         InvokeAsync(StateHasChanged);
-    //     });
-
-    //     await hubConnection.StartAsync();
-    // }
 
     private async Task Join(UserConnection userConnection)
     {
@@ -53,8 +42,7 @@ else
         hubConnection.On<string, string>("ReceiveMessage", 
             (user, message) =>
         {
-            var encodedMsg = $"{user}: {message}";
-            messages.Add(encodedMsg);
+            messages.Add(new Message(user, message));
             InvokeAsync(StateHasChanged);
         });
 
@@ -65,6 +53,32 @@ else
             .SendAsync("JoinChat", userConnection);
     }
 
-    public bool IsConnected =>
-        hubConnection?.State == HubConnectionState.Connected;
+    private async Task SendMessage(string message)
+    {
+        if (hubConnection is null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(message))
+        {
+            return;
+        }
+
+        if (IsConnected)
+        {
+            await hubConnection.SendAsync("SendMessage", message);
+        }
+    }
+
+    private async Task CloseChat()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.StopAsync();
+            await hubConnection.DisposeAsync();
+        }
+
+        IsConnected = false;
+    }
 }

@@ -72,4 +72,5 @@ public class ChatHub : Hub<IChatClient>
         return JsonSerializer
             .Deserialize<UserConnection>(stringConnection);
     }
+
 }

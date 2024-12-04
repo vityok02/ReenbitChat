@@ -1,54 +1,62 @@
 ﻿@page "/chat"
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
+@using ReenbitChatClient.Models
 @inject NavigationManager Navigation
 
 <PageTitle>Chat</PageTitle>
 
-<ul id="messages">
-    @foreach (var message in messages)
-    {
-        <li>@message.UserName: @message.Text</li>
-    }
-</ul>
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Chat</h4>
+            <button @onclick="Close" class="btn btn-sm btn-outline-secondary">&times;</button>
+        </div>
+        <div class="card-body">
+            <ul id="messages" class="list-unstyled mb-4">
+                @foreach (var message in Messages)
+                {
+                    <li class="mb-2">
+                        <strong>@message.UserName</strong>
+                        <div class="bg-light border rounded p-2">
+                            @message.Text
+                        </div>
+                    </li>
+                }
+            </ul>
+            <div class="input-group">
+                <input @bind="messageInput" class="form-control" placeholder="Введите сообщение" />
+                <button @onclick="Send" class="btn btn-primary">Отправить</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-<input @bind="messageInput" />
-<button @onclick="SendMessage">Send</button>
-<button @onclick="CloseChat">Close</button>
-
-<hr>
 
 
 @code {
-    [Parameter] public HubConnection Connection { get; set; }
+    [Parameter] public string UserName { get; set; }
+    [Parameter] public string ChatName { get; set; }
+    [Parameter] public List<Message> Messages { get; set; }
+    [Parameter] public EventCallback<string> SendMessage { get; set; }
+    [Parameter] public EventCallback CloseChat { get; set; }
     private string? userInput;
     private string? messageInput;
-    public List<Message> messages = new();
 
-    public async Task SendMessage()
+    private async Task Send()
     {
-        if (string.IsNullOrEmpty(messageInput))
+        if (!string.IsNullOrEmpty(messageInput))
         {
-            return;
+            await SendMessage.InvokeAsync(messageInput);
+            messageInput = string.Empty;
+            await InvokeAsync(StateHasChanged);
+
         }
-
-        await Connection.SendAsync("SendMessage", messageInput);
-        await UpdateAsync();
     }
 
-    public async Task CloseChat()
+    private async Task Close()
     {
-
+        await CloseChat.InvokeAsync();
+        await InvokeAsync(StateHasChanged);
     }
-
-    public async Task UpdateAsync()
-    {
-        Connection.On<string, string>("ReceiveMessage",
-            (user, message) =>
-        {
-            messages.Add(new Message(user, message));
-            InvokeAsync(StateHasChanged);
-        });
-    }
-    public record Message(string UserName, string Text);
 }
