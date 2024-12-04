@@ -12,7 +12,6 @@
     <Chat
     ChatName="chatInput"
     Messages="messages"
-    SendMessage="SendMessage"
     CloseChat="CloseChat"/>
 }
 else
@@ -51,24 +50,6 @@ else
 
         await hubConnection
             .SendAsync("JoinChat", userConnection);
-    }
-
-    private async Task SendMessage(string message)
-    {
-        if (hubConnection is null)
-        {
-            return;
-        }
-
-        if (string.IsNullOrEmpty(message))
-        {
-            return;
-        }
-
-        if (IsConnected)
-        {
-            await hubConnection.SendAsync("SendMessage", message);
-        }
     }
 
     private async Task CloseChat()

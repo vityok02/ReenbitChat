@@ -1,3 +1,4 @@
+﻿using ReenbitChatClient;
 using ReenbitChatClient.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddSingleton<TextAnalyticsService>();
 
 var app = builder.Build();
 
