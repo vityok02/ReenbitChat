@@ -7,10 +7,12 @@ namespace ReenbitChat.Hubs;
 public class ChatHub : Hub<IChatClient>
 {
     private readonly IDistributedCache _cache;
+    private readonly TextAnalyticsService _textAnalyticsService;
 
-    public ChatHub(IDistributedCache cache)
+    public ChatHub(IDistributedCache cache, TextAnalyticsService textAnalyticsService)
     {
         _cache = cache;
+        _textAnalyticsService = textAnalyticsService;
     }
 
     public async Task JoinChat(UserConnection connection)
@@ -26,7 +28,7 @@ public class ChatHub : Hub<IChatClient>
 
         await Clients
             .Group(connection.ChatRoom)
-            .ReceiveMessage("Admin", $"{connection.UserName} joined the chat");
+            .ReceiveMessage(connection.UserName, $"{connection.UserName} joined the chat", "Neutral");
     }
 
     public async Task SendMessage(string message)
@@ -38,9 +40,10 @@ public class ChatHub : Hub<IChatClient>
             return;
         }
 
+        var sentiment = await _textAnalyticsService.AnalyzeSentimentAsync(message);
         await Clients
             .Group(connection.ChatRoom)
-            .ReceiveMessage(connection.UserName, message);
+            .ReceiveMessage(connection.UserName, message, sentiment.Sentiment);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)

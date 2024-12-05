@@ -1,3 +1,4 @@
+﻿using ReenbitChatClient;
 using ReenbitChatClient.Components;
 
 var builder = WebApplication.CreateBuilder(args);

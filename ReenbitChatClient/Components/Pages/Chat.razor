@@ -9,54 +9,73 @@
 <div class="container mt-4">
     <div class="card shadow-sm">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">Chat</h4>
+            <h4 class="mb-0">Chat Room: @ChatName</h4>
             <button @onclick="Close" class="btn btn-sm btn-outline-secondary">&times;</button>
         </div>
         <div class="card-body">
             <ul id="messages" class="list-unstyled mb-4">
                 @foreach (var message in Messages)
                 {
-                    <li class="mb-2">
-                        <strong>@message.UserName</strong>
-                        <div class="bg-light border rounded p-2">
-                            @message.Text
-                        </div>
-                    </li>
+                    if (message.Sentiment is not null)
+                    {
+                        <li class="mb-2">
+                            <strong>@message.UserName</strong>
+                            <div class="border rounded p-2" style="border-top:3px solid @GetSentimentColor(message.Sentiment) !important">
+                                @message.Text
+                            </div>
+                        </li>
+                    }
+                    else 
+                    {
+                        <li class="mb-2">
+                            <div class="border rounded p-2">
+                                @message.Text
+                            </div>
+                        </li>
+                    }
                 }
             </ul>
             <div class="input-group">
-                <input @bind="messageInput" class="form-control" placeholder="Введите сообщение" />
-                <button @onclick="Send" class="btn btn-primary">Отправить</button>
+                <input @bind="messageInput" class="form-control" placeholder="Type your message" />
+                <button @onclick="Send" class="btn btn-primary">Send</button>
             </div>
         </div>
     </div>
 </div>
 
-
-
 @code {
     [Parameter] public string UserName { get; set; }
     [Parameter] public string ChatName { get; set; }
-    [Parameter] public List<Message> Messages { get; set; }
-    [Parameter] public EventCallback<string> SendMessage { get; set; }
+    [Parameter] public List<Message> Messages { get; set; } = [];
+    [Parameter] public EventCallback<Message> SendMessage { get; set; }
     [Parameter] public EventCallback CloseChat { get; set; }
-    private string? userInput;
+
     private string? messageInput;
 
     private async Task Send()
     {
         if (!string.IsNullOrEmpty(messageInput))
         {
-            await SendMessage.InvokeAsync(messageInput);
+            await SendMessage.InvokeAsync(new Message(UserName, messageInput));
+
             messageInput = string.Empty;
             await InvokeAsync(StateHasChanged);
-
         }
     }
 
     private async Task Close()
     {
         await CloseChat.InvokeAsync();
-        await InvokeAsync(StateHasChanged);
+    }
+
+    private string GetSentimentColor(string sentiment)
+    {
+        return sentiment switch
+        {
+            "Positive" => "green",
+            "Negative" => "red",
+            "Neutral" => "gray",
+            _ => "blue"
+        };
     }
 }

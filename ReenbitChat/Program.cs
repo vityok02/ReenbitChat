@@ -1,3 +1,4 @@
+using ReenbitChat;
 using ReenbitChat.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +23,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<TextAnalyticsService>();
 
 var app = builder.Build();
 
