@@ -8,8 +8,6 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddSingleton<TextAnalyticsService>();
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -10,8 +10,9 @@
 @if (IsConnected)
 {
     <Chat
-    ChatName="chatInput"
+    ChatName="@chatName"
     Messages="messages"
+    SendMessage="SendMessage"
     CloseChat="CloseChat"/>
 }
 else
@@ -22,7 +23,7 @@ else
 @code {
     private HubConnection? hubConnection;
     private List<Message> messages = [];
-    private string? chatInput;
+    private string? chatName;
 
     public bool IsConnected 
     { 
@@ -38,10 +39,10 @@ else
                 .ToAbsoluteUri("https://localhost:7036/chathub"))
             .Build();
 
-        hubConnection.On<string, string>("ReceiveMessage", 
-            (user, message) =>
+        hubConnection.On<string, string, string>("ReceiveMessage",
+            (userName, message, sentiment) =>
         {
-            messages.Add(new Message(user, message));
+            messages.Add(new Message(userName, message, sentiment));
             InvokeAsync(StateHasChanged);
         });
 
@@ -50,6 +51,17 @@ else
 
         await hubConnection
             .SendAsync("JoinChat", userConnection);
+
+            chatName = userConnection.ChatRoom;
+    }
+
+    private async Task SendMessage(Message message)
+    {
+        if (IsConnected)
+        {
+
+            await hubConnection!.SendAsync("SendMessage", message.Text);
+        }
     }
 
     private async Task CloseChat()

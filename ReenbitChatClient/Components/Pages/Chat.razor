@@ -3,7 +3,6 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @using ReenbitChatClient.Models
 @inject NavigationManager Navigation
-@inject TextAnalyticsService TextAnalyticsService
 
 <PageTitle>Chat</PageTitle>
 
@@ -17,12 +16,23 @@
             <ul id="messages" class="list-unstyled mb-4">
                 @foreach (var message in Messages)
                 {
-                    <li class="mb-2">
-                        <strong>@message.UserName</strong>
-                        <div class="border rounded p-2" style="background-color:@GetSentimentColor(message.Sentiment?.Sentiment!)">
-                            @message.Text
-                        </div>
-                    </li>
+                    if (message.Sentiment is not null)
+                    {
+                        <li class="mb-2">
+                            <strong>@message.UserName</strong>
+                            <div class="border rounded p-2" style="border-top:3px solid @GetSentimentColor(message.Sentiment) !important">
+                                @message.Text
+                            </div>
+                        </li>
+                    }
+                    else 
+                    {
+                        <li class="mb-2">
+                            <div class="border rounded p-2">
+                                @message.Text
+                            </div>
+                        </li>
+                    }
                 }
             </ul>
             <div class="input-group">
@@ -36,7 +46,8 @@
 @code {
     [Parameter] public string UserName { get; set; }
     [Parameter] public string ChatName { get; set; }
-    [Parameter] public List<Message> Messages { get; set; }
+    [Parameter] public List<Message> Messages { get; set; } = [];
+    [Parameter] public EventCallback<Message> SendMessage { get; set; }
     [Parameter] public EventCallback CloseChat { get; set; }
 
     private string? messageInput;
@@ -45,24 +56,7 @@
     {
         if (!string.IsNullOrEmpty(messageInput))
         {
-            // Викликаємо метод відправки повідомлення
-
-            // Аналіз настроїв
-            var sentiment = await TextAnalyticsService.AnalyzeSentimentAsync(messageInput);
-
-            // Додаємо повідомлення з аналізом настроїв
-            Messages.Add(new Message
-                {
-                    UserName = UserName,
-                    Text = messageInput,
-                    Sentiment = sentiment != null ? new SentimentAnalysisResult
-                    {
-                        Sentiment = sentiment.Sentiment.ToString(),
-                        PositiveScore = sentiment.PositiveScore,
-                        NeutralScore = sentiment.NeutralScore,
-                        NegativeScore = sentiment.NegativeScore
-                    } : null
-                });
+            await SendMessage.InvokeAsync(new Message(UserName, messageInput));
 
             messageInput = string.Empty;
             await InvokeAsync(StateHasChanged);
@@ -73,8 +67,6 @@
     {
         await CloseChat.InvokeAsync();
     }
-
-    // TODO: set bg color by sentiment
 
     private string GetSentimentColor(string sentiment)
     {
